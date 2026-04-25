@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>Car Market</title>
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
+
+<style>
+body { font-family: Arial; background:#111; color:white; }
+.card { background:#222; padding:10px; margin:10px; border-radius:10px; }
+img { width:100%; border-radius:10px; }
+input, button { width:100%; padding:10px; margin:5px 0; }
+</style>
+</head>
+
+<body>
+
+<h2>🚗 Car Market</h2>
+
+<!-- ➕ ADD -->
+<h3>➕ Добавить авто</h3>
+
+<input id="model" placeholder="Модель" />
+<input id="price" placeholder="Цена" />
+<input id="desc" placeholder="Описание" />
+<input type="file" id="img" />
+
+<button onclick="addCar()">Опубликовать</button>
+
+<hr>
+
+<!-- 🤖 AI -->
+<h3>🤖 Оценка авто</h3>
+
+<input id="ai" placeholder="Toyota Camry 2018 120k km" />
+<button onclick="rate()">Оценить</button>
+<p id="out"></p>
+
+<hr>
+
+<!-- 📢 LIST -->
+<h3>📢 Объявления</h3>
+<div id="list"></div>
+
+<script>
+const tg = window.Telegram.WebApp;
+tg.expand();
+
+// ========================
+// ➕ ADD CAR
+// ========================
+function addCar() {
+  const file = document.getElementById('img').files[0];
+
+  const reader = new FileReader();
+
+  reader.onload = function () {
+    fetch('http://localhost:3000/api/add', {
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({
+        model: model.value,
+        price: price.value,
+        desc: desc.value,
+        image: reader.result
+      })
+    });
+
+    alert("🚗 Добавлено!");
+  };
+
+  reader.readAsDataURL(file);
+}
+
+// ========================
+// 🤖 AI
+// ========================
+function rate() {
+  fetch('http://localhost:3000/api/ai', {
+    method:'POST',
+    headers:{'Content-Type':'application/json'},
+    body: JSON.stringify({ text: ai.value })
+  })
+  .then(r=>r.json())
+  .then(d=>{
+    out.innerText = d.result;
+  });
+}
+
+// ========================
+// 📦 LOAD CARS
+// ========================
+fetch('http://localhost:3000/api/cars')
+.then(r=>r.json())
+.then(data=>{
+  let html = '';
+
+  data.forEach(c=>{
+    html += `
+      <div class="card">
+        <img src="${c.image}" />
+        <h3>${c.model}</h3>
+        <p>$${c.price}</p>
+        <p>${c.desc}</p>
+      </div>
+    `;
+  });
+
+  list.innerHTML = html;
+});
+</script>
+
+</body>
+</html>
